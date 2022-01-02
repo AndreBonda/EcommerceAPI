@@ -1,0 +1,4 @@
+{
+  "connectionString": "mongodb://localhost/ecommerce",
+  "jwtSecretKey": "example_key"
+}

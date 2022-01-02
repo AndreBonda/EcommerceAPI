@@ -1,0 +1,34 @@
+{
+  "name": "ecommerceapi",
+  "version": "1.0.0",
+  "description": "Rest API that simulate some simple use-cases of an e-commerce platform.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "nodemon": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndreBonda/EcommerceAPI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndreBonda/EcommerceAPI/issues"
+  },
+  "homepage": "https://github.com/AndreBonda/EcommerceAPI#readme",
+  "devDependencies": {
+    "jest": "^27.4.5",
+    "supertest": "^6.1.6"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "config": "^3.3.6",
+    "express": "^4.17.2",
+    "joi": "^17.5.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.1.4",
+    "winston": "^3.3.3"
+  }
+}
