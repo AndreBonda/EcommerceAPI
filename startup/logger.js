@@ -1,8 +1,8 @@
-const winston = require('winston');
-
 /**
- * I configured only a developer logger for writing in console because this is an application test. It will not released in production
+ * It's configured only as developer logger for writing in console because this is an application test. It is not released in production
  */
+
+const winston = require('winston');
 
 module.exports = winston.createLogger({
     transports: [

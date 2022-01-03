@@ -1,10 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const errorHandler = require('../middleware/errorHandler');
 const User = require('../models/user');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', errorHandler(async (req, res) => {
     const validation = User.validate(req.body);
 
     if (!validation.result) return res.status(400).send(validation.message);
@@ -34,6 +35,6 @@ router.post('/', async (req, res) => {
             id: user._id,
             email: user.email
         });
-});
+}));
 
 module.exports = router;

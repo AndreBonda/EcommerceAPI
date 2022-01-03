@@ -1,7 +1,7 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 
-const User = require('../../models/user');
+const User = require('../../../models/user');
 
 describe('/api/users', () => {
     let server;
@@ -23,7 +23,7 @@ describe('/api/users', () => {
     }
 
     beforeEach(async () => {
-        server = require('../../index');
+        server = require('../../../index');
         email = 'text@text.com';
         password = 'Prova1*';
         name = "Abc";
@@ -32,8 +32,8 @@ describe('/api/users', () => {
     });
 
     afterEach(async () => {
-        await server.close();
         await User.deleteMany({});
+        await server.close();
     });
 
     it('should return 400 if email not passed', async () => {
@@ -60,6 +60,19 @@ describe('/api/users', () => {
         expect(res.status).toBe(400);
     });
 
+    it('should return 400 if email is duplicate', async () => {
+        const user = new User({
+            email: email,
+            password: password,
+            name: name,
+            surname: surname,
+            insert: new Date()
+        });
+        await user.save();
+        const res = await exec();
+        expect(res.status).toBe(400);
+    });
+
     it('should return 200 if registration is valid', async () => {
         const res = await exec();
         expect(res.status).toBe(200);
@@ -77,6 +90,4 @@ describe('/api/users', () => {
         const token = res.header['x-auth-token'];
         expect(token).toBeTruthy();
     });
-
-
 });
