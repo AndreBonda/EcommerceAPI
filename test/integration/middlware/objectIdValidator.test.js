@@ -1,6 +1,6 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const Category = require('../../../models/category');
+const { Category } = require('../../../models/category');
 
 describe('objectIdvalidator middleware', () => {
     let objectId;

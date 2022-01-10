@@ -1,6 +1,6 @@
 const request = require('supertest');
 const User = require('../../../models/user');
-const Category = require('../../../models/category');
+const { Category } = require('../../../models/category');
 
 describe('admin middleware', () => {
     let token;

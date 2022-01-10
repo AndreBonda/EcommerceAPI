@@ -1,19 +1,16 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const config = require('config');
+const _ = require('lodash');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const errorHandler = require('../middleware/errorHandler');
 const idValidator = require('../middleware/objectIdValidator');
-const Category = require('../models/category');
+const { Category } = require('../models/category');
 
 const router = express.Router();
 
 router.get('/:id', idValidator, errorHandler(async (req, res) => {
     const category = await Category.findById(req.params.id).select('-createdBy');
-
     if (!category) return res.status(404).send('Category not found.');
-
     res.send(category);
 }));
 
@@ -53,19 +50,19 @@ router.put('/:id', [auth, admin, idValidator], errorHandler(async (req, res) => 
     const validation = Category.validate(req.body);
     if (!validation.result) return res.status(400).send(validation.message);
 
-    const category = await Category.findByIdAndUpdate(req.params.id,
-        {
-            name: req.body.name
-        });
+    let category = await Category.findById(req.params.id);
+    if (!category) return res.status(404).send('Category not found.');
 
-    if (!category) res.status(404).send('Category not found');
+    category.name = req.body.name;
+    category.modified = new Date();
+    category = await category.save();
 
-    res.send(category);
+    res.send(_.pick(category, ['name', 'insert', 'modified']));
 }));
 
 router.delete('/:id', [auth, admin, idValidator], errorHandler(async (req, res) => {
     const category = await Category.findByIdAndRemove(req.params.id).select('-createdBy');
-    if (!category) return res.status(404).send('Catgory not found');
+    if (!category) return res.status(404).send('Category not found');
     res.send(category);
 }));
 

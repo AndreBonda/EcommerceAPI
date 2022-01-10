@@ -27,7 +27,6 @@ const dbSchema = new mongoose.Schema({
 dbSchema.statics.validate = function (category) {
     const schema = Joi.object({
         name: Joi.string()
-            .alphanum()
             .required()
             .min(1)
             .max(50),
@@ -37,4 +36,5 @@ dbSchema.statics.validate = function (category) {
     return schemaValidation(error);
 }
 
-module.exports = mongoose.model("Categories", dbSchema);
+module.exports.Category = mongoose.model("Categories", dbSchema);
+module.exports.categorySchema = dbSchema;
