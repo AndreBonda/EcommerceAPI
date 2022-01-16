@@ -74,6 +74,7 @@ dbSchema.statics.validate = function (product) {
             .min(0)
             .max(product.basePrice),
         discountPercentage: Joi.number()
+            .integer()
             .min(1)
             .max(99),
         categoryId: Joi.objectId()
@@ -81,6 +82,26 @@ dbSchema.statics.validate = function (product) {
     }).nand('discountPrice', 'discountPercentage');
 
     const { error } = schema.validate(product);
+    return schemaValidation(error);
+}
+
+dbSchema.statics.validateApplyDiscount = function (discountParams) {
+    const schema = Joi.object({
+        basePrice: Joi.number()
+            .required()
+            .min(0)
+            .max(99999),
+        discountPrice: Joi.number()
+            .min(0)
+            .precision(2)
+            .max(product.basePrice),
+        discountPercentage: Joi.number()
+            .integer()
+            .min(1)
+            .max(99)
+    }).xor('discountPrice', 'discountPercentage');
+
+    const { error } = schema.validate(discountParams);
     return schemaValidation(error);
 }
 
