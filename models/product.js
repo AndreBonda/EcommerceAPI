@@ -93,8 +93,7 @@ dbSchema.statics.validateApplyDiscount = function (discountParams) {
             .max(99999),
         discountPrice: Joi.number()
             .min(0)
-            .precision(2)
-            .max(product.basePrice),
+            .max(discountParams.basePrice),
         discountPercentage: Joi.number()
             .integer()
             .min(1)

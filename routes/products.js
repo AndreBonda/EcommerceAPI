@@ -52,6 +52,7 @@ router.get('/', errorHandler(async (req, res) => {
 
 router.post('/', [auth, admin], errorHandler(async (req, res) => {
     const validation = Product.validate(req.body);
+
     if (!validation.result) return res.status(400).send(validation.message);
 
     let product = await Product.findOne({ name: req.body.name });
@@ -104,10 +105,11 @@ router.patch('/applyDiscount/:id', [auth, admin, idValidator], errorHandler(asyn
     };
 
     const validation = Product.validateApplyDiscount(params);
-    if (!validation) return res.status(400).send(validation.message);
+    if (!validation.result) return res.status(400).send(validation.message);
 
     if (params.discountPrice) {
         product.discountPrice = params.discountPrice;
+        product.discountPercentage = null;
     } else {
         product.discountPercentage = params.discountPercentage;
         params.discountPrice = (product.basePrice * (100 - params.discountPercentage) / 100);
