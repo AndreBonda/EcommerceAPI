@@ -165,6 +165,7 @@ describe('/api/products', () => {
             description = 'Description1';
             basePrice = 100;
             discountPrice = 50;
+            discountPercentage = undefined;
 
             let category = new Category({
                 name: "Category1",
@@ -173,9 +174,6 @@ describe('/api/products', () => {
             });
             category = await category.save();
             categoryId = category._id;
-            basePrice = 100;
-            discountPrice = 50;
-            discountPercentage = undefined;
         });
 
         const httpPost = async () => {
@@ -221,7 +219,7 @@ describe('/api/products', () => {
             expect(res.status).toBe(400);
         });
 
-        it('should return 400 if category not found', async () => {
+        it('should return 404 if category not found', async () => {
             let product = new Product({
                 name: name,
                 description: description,
@@ -238,7 +236,7 @@ describe('/api/products', () => {
             categoryId = mongoose.Types.ObjectId();
 
             const res = await httpPost();
-            expect(res.status).toBe(400);
+            expect(res.status).toBe(404);
         });
 
         it('should return 400 discountPrice and discountPecentage are present at the same time', async () => {
@@ -268,6 +266,161 @@ describe('/api/products', () => {
             discountPercentage = 40;
             const res = await httpPost();
             expect(res.body.discountPrice).toBeCloseTo(60);
+        });
+    });
+
+    describe('PUT /id', () => {
+        let token;
+        let productId;
+        let name;
+        let description;
+        let basePrice;
+        let discountPrice;
+        let discountPercentage;
+        let categoryId;
+        let available;
+
+        beforeEach(async () => {
+            token = new User({ isAdmin: true }).generateAuthToken();
+
+            name = 'Product1';
+            description = 'Description1';
+            basePrice = 100;
+            discountPrice = 50;
+            discountPercentage = undefined;
+            available = true;
+
+            let category = new Category({
+                name: "Category1",
+                createdBy: mongoose.Types.ObjectId(),
+                insert: new Date()
+            });
+            category = await category.save();
+            categoryId = category._id;
+
+            let product = await Product({
+                name: name,
+                basePrice: basePrice,
+                discountPrice: discountPrice,
+                insert: new Date(),
+                available: available,
+                createdBy: mongoose.Types.ObjectId(),
+                category: categoryId
+            });
+
+            product = await product.save();
+            productId = product._id;
+        });
+
+        const httpPut = async () => {
+            return await request(server)
+                .put(`/api/products/${productId}`)
+                .set('x-auth-token', token)
+                .send({
+                    name: name,
+                    description: description,
+                    basePrice: basePrice,
+                    discountPrice: discountPrice,
+                    discountPercentage: discountPercentage,
+                    categoryId: categoryId,
+                    available: available
+                });
+        }
+
+        it('should return 401 if no token is provided', async () => {
+            token = '';
+            const res = await httpPut();
+            expect(res.status).toBe(401);
+        });
+
+        it('should return 400 if invalid token is provided', async () => {
+            token = '1234';
+            const res = await httpPut();
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 404 if product does not exist', async () => {
+            productId = mongoose.Types.ObjectId();
+            const res = await httpPut();
+            expect(res.status).toBe(404);
+        });
+
+        it('should return 404 if category does not exist', async () => {
+            categoryId = mongoose.Types.ObjectId();
+            const res = await httpPut();
+            expect(res.status).toBe(404);
+        });
+
+        it('should return 400 if product name is already used', async () => {
+            name = 'Product2';
+
+            let product = await Product({
+                name: name,
+                basePrice: basePrice,
+                discountPrice: discountPrice,
+                insert: new Date(),
+                available: available,
+                createdBy: mongoose.Types.ObjectId(),
+                category: categoryId
+            });
+
+            await product.save();
+
+            const res = await httpPut();
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 400 discountPrice and discountPecentage are present at the same time', async () => {
+            discountPercentage = 10;
+            discountPrice = 10;
+
+            const res = await httpPut();
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 400 if discountPrice is grater than basePrice', async () => {
+            basePrice = 10;
+            discountPrice = 15;
+
+            const res = await httpPut();
+            expect(res.status).toBe(400);
+        });
+
+        it('it should calculate discountPrice correctly', async () => {
+            basePrice = 100;
+            discountPrice = undefined;
+            discountPercentage = 40;
+
+            const res = await httpPut();
+            expect(res.status).toBe(200);
+
+            // should calculate discountPrice if discountPercentage is passed
+            expect(res.body.discountPrice).toBeCloseTo(60);
+            expect(res.body.modified).toBeTruthy()
+        });
+
+        it('it should update all fields', async () => {
+            name = 'Name2';
+            description = 'Description2';
+            basePrice = 200;
+            available = false;
+
+            let category = new Category({
+                name: 'Category2',
+                createdBy: mongoose.Types.ObjectId(),
+                insert: new Date()
+            });
+            category = await category.save();
+
+            categoryId = category._id;
+
+            const res = await httpPut();
+            expect(res.status).toBe(200);
+            expect(res.body.name).toBe(name);
+            expect(res.body.description).toBe(description);
+            expect(res.body.basePrice).toBe(basePrice);
+            expect(res.body.available).toBe(available);
+            expect(res.body.category).toEqual(categoryId.toString());
         });
     });
 

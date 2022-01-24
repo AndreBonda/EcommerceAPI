@@ -103,4 +103,22 @@ dbSchema.statics.validate = function (user) {
     return schemaValidation(error);
 }
 
+dbSchema.statics.validateAuthentication = function (params) {
+    const schema = Joi.object({
+        email: Joi.string()
+            .email({ minDomainSegments: 2 })
+            .required()
+            .min(1)
+            .max(255),
+        password: Joi.string()
+            .required()
+            .min(5)
+            .max(30)
+    });
+
+    const { error } = schema.validate(params);
+    return schemaValidation(error);
+}
+
+
 module.exports = mongoose.model("Users", dbSchema);

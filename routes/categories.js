@@ -57,7 +57,7 @@ router.put('/:id', [auth, admin, idValidator], errorHandler(async (req, res) => 
     category.modified = new Date();
     category = await category.save();
 
-    res.send(_.pick(category, ['name', 'insert', 'modified']));
+    res.send(_.pick(category, ['_id', 'name', 'insert', 'modified']));
 }));
 
 router.delete('/:id', [auth, admin, idValidator], errorHandler(async (req, res) => {

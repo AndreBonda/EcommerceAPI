@@ -7,7 +7,6 @@ const idValidator = require('../middleware/objectIdValidator');
 const Product = require('../models/product');
 const { Category } = require('../models/category');
 
-
 const router = express.Router();
 
 router.get('/:id', idValidator, errorHandler(async (req, res) => {
@@ -59,16 +58,16 @@ router.post('/', [auth, admin], errorHandler(async (req, res) => {
     if (product) return res.status(400).send('Product name is already used.');
 
     let category = await Category.findById(req.body.categoryId);
-    if (!category) return res.status(400).send('Category not found.');
+    if (!category) return res.status(404).send('Category not found.');
 
     // prices are rounded in mongoose Product model
-
     product = new Product({
         name: req.body.name,
         description: req.body.description,
         basePrice: req.body.basePrice,
         discountPrice: req.body.discountPrice,
         discountPercentage: req.body.discountPercentage,
+        available: req.body.available,
         insert: new Date(),
         createdBy: req.user._id,
         category: req.body.categoryId
@@ -90,9 +89,52 @@ router.post('/', [auth, admin], errorHandler(async (req, res) => {
     }
 
     product = await product.save();
-    res.send(_.pick(product, ['_id', 'name', 'description', 'basePrice', 'discountPrice', 'discountPercentage', 'insert']));
+    res.send(_.pick(product, ['_id', 'name', 'description', 'basePrice', 'discountPrice', 'available', 'discountPercentage', 'insert', 'modified']));
 }));
 
+router.put('/:id', [auth, admin], errorHandler(async (req, res) => {
+    const validation = Product.validate(req.body);
+
+    if (!validation.result) return res.status(400).send(validation.message);
+
+    let product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).send('Product not found.');
+
+    let category = await Category.findById(req.body.categoryId);
+    if (!category) return res.status(404).send('Category not found.');
+
+    let productByName = await Product.findOne({ name: req.body.name });
+    if (productByName && !productByName._id.equals(product._id)) return res.status(400).send('Product name is already used.');
+
+    // prices are rounded in mongoose Product model
+    product.name = req.body.name;
+    product.description = req.body.description;
+    product.basePrice = req.body.basePrice;
+    product.available = req.body.available;
+    product.modified = new Date();
+    product.category = req.body.categoryId;
+    product.discountPrice = req.body.basePrice;
+    product.discountPercentage = undefined;
+
+    if (req.body.discountPercentage) {
+        // discount price calculation
+        let discountPrice = (req.body.basePrice * (100 - req.body.discountPercentage) / 100);
+
+        if (discountPrice >= 0.01) {
+            // rounding discount price with 2 decimal
+            product.discountPrice = Math.round((discountPrice + Number.EPSILON) * 1e2) / 1e2;
+        }
+        else {
+            product.discountPrice = 0.01;
+        }
+    } else if (req.body.discountPrice) {
+        product.discountPrice = req.body.discountPrice;
+    }
+
+    product = await product.save();
+    res.send(_.pick(product, ['_id', 'name', 'description', 'basePrice', 'discountPrice', 'available', 'discountPercentage', 'insert', 'modified', 'category']));
+
+}));
 
 router.patch('/applyDiscount/:id', [auth, admin, idValidator], errorHandler(async (req, res) => {
     let product = await Product.findById(req.params.id);
@@ -122,6 +164,7 @@ router.patch('/applyDiscount/:id', [auth, admin, idValidator], errorHandler(asyn
             product.discountPrice = 0.01;
         }
     }
+    product.modified = new Date();
 
     product = await product.save();
     res.send(product);

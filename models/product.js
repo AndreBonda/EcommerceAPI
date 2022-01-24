@@ -40,6 +40,11 @@ const dbSchema = new mongoose.Schema({
             }
         }
     },
+    available: {
+        type: Boolean,
+        required: true,
+        default: true
+    },
     insert: {
         type: Date,
         required: true
@@ -77,6 +82,7 @@ dbSchema.statics.validate = function (product) {
             .integer()
             .min(1)
             .max(99),
+        available: Joi.bool(),
         categoryId: Joi.objectId()
             .required(),
     }).nand('discountPrice', 'discountPercentage');
